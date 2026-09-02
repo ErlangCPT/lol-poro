@@ -180,6 +180,15 @@ EndOfGame ───────────────────────�
 Auto-Update, Crash-Reporting lokal, Settings-Export, Hotkeys, Dark/Light, Pro-Spieler-Liste,
 Performance-Budget (Overlay < 2 % CPU), Installer-Signierung, Discord-Rich-Presence (optional).
 
+### Später – Discord Rich Presence (verschoben am 03.09.2026)
+
+Statusanzeige im Discord-Profil ("Spielt League of Legends · Champion Select · Ranked Solo/Duo" bzw. "Im Spiel ·
+Viego · 14:32"). Voraussetzung: eigene Anwendung im Discord Developer Portal (App-ID, hochgeladene Bilder).
+Umsetzung, wenn gewünscht: Einstellung "Discord-Status anzeigen" plus App-ID-Feld, Client über die lokale
+Discord-IPC-Pipe (z. B. `discord-rpc` oder `@xhayper/discord-rpc`), Aktualisierung alle 15 s aus Gameflow-Phase,
+Champion Select und Live-Daten, keine Fehler, wenn Discord nicht läuft. Rein kosmetisch, keine Abhängigkeit
+anderer Funktionen.
+
 ## 3. Datenmodell (Auszug, `packages/core`)
 
 ```ts

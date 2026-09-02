@@ -107,6 +107,10 @@ Riot-Hinweis steht in den Einstellungen.
   dunkles Design (auch "wie Windows"), Pro-Spieler-Liste (`pros.json`, Tag "Pro" in der Lobby), Prozess-CPU in der
   Diagnose (Ziel Overlay unter 2 %), Installer-Signierung über die electron-builder-Umgebungsvariablen vorbereitet.
   Discord Rich Presence wurde weggelassen (optional laut Plan, braucht eine eigene Discord-App-ID).
+- Später (bewusst verschoben): Discord Rich Presence. Zeigt im Discord-Profil "Spielt League of Legends" mit
+  Phase, Champion und Spielzeit. Braucht eine eigene Anwendung im Discord Developer Portal (App-ID plus Icon);
+  Umsetzung: Schalter "Discord-Status anzeigen" in den Einstellungen, Verbindung über die lokale Discord-IPC-Pipe,
+  Status aus Gameflow-Phase und Live-Daten, still, wenn Discord nicht läuft.
 - Noch offen: Abnahme im echten Champion Select (Normal Draft und Ranked Solo) und im echten Spiel (Event-Namen
   der Live-API, Overlay über dem Spielfenster), Kalibrierung der Tag-Schwellen; die Tier-Liste braucht ein paar hundert Matches pro Patch, bis sie belastbar ist.
 
