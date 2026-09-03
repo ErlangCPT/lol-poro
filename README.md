@@ -1,9 +1,37 @@
 # Poro – League of Legends Companion (Porofessor-Klon)
 
-Desktop-App (Electron + TypeScript + React), die im Champion Select und ab dem Ladebildschirm alle Spieler
-analysiert: Rank, Winrate, KDA, Champion-Erfahrung, Hauptrollen, Premades, Player Tags und Team Stats.
-Datenquelle ist der lokale League Client (LCU API); ein Riot-API-Key ist optional und ergänzt die eigene
-Match-History sowie die Post-Game-Timeline (Match-V5).
+Poro ist ein Windows-Desktop-Begleiter für League of Legends. Die App verbindet sich lokal mit dem League Client
+und bündelt Lobby-Analyse, Champion-Select-Werkzeuge, Live-Overlay und Post-Game-Auswertung in einer kompakten
+Hextech-Oberfläche. Auf einen Blick werden unter anderem Rang, Winrate, KDA, Champion-Erfahrung, Hauptrollen,
+Premades, Player Tags, Team-Statistiken, Objectives und Jungle-Timer sichtbar.
+
+Die wichtigsten Daten kommen direkt aus der lokalen LCU- und Live-Client-API. Ein eigener Riot-API-Key ist
+optional und ergänzt die persönliche Match-History, detaillierte Post-Game-Timelines sowie lokale Meta-Daten.
+
+<p align="center">
+  <a href="https://github.com/ErlangCPT/lol-poro/releases/latest"><img alt="Windows-Installer herunterladen" src="https://img.shields.io/badge/Windows-Installer-0078D4?logo=windows11&logoColor=white"></a>
+  <a href="https://discord.com/channels/@me"><img alt="Discord: abschiebung_" src="https://img.shields.io/badge/Discord-abschiebung__-5865F2?logo=discord&logoColor=white"></a>
+</p>
+
+Kontakt: Öffne Discord über den Badge und füge **`abschiebung_`** als Freund hinzu.
+
+## Screenshots
+
+### Lobby-Analyse
+
+Zehn Spieler, Rollen, aktuelle Form, Champion-Statistiken, Premades und auffällige Spielmuster in einer Ansicht.
+
+![Poro Lobby-Analyse mit zwei Teamkarten und zehn Spielern](docs/screenshots/poro-lobby.png)
+
+### In-Game-Overlay
+
+Kompakte Objective-, Spieler- und Jungle-Timer, ohne dem Spiel den Tastaturfokus zu nehmen.
+
+<p align="center">
+  <img src="docs/screenshots/poro-overlay.png" alt="Poro In-Game-Overlay mit Objective- und Jungle-Timern" width="560">
+</p>
+
+Alle sichtbaren Spielernamen und Werte in den Screenshots sind synthetische Demo-Daten.
 
 Dokumentation:
 
