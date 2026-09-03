@@ -46,9 +46,10 @@ Sobald ein Spiel läuft (Live Client Data API auf Port 2999 antwortet), öffnet 
 immer-im-Vordergrund-Fenster mit Objective-Timern, Live-Stats beider Teams und Jungle-Timern. Es ist standardmäßig
 durchklickbar:
 
-- `Ctrl+Shift+O` entsperrt das Overlay (Rahmen wird blau): dann lässt es sich an der Kopfzeile mit gedrückter
-  Maustaste verschieben und die Jungle-Camps lassen sich per Klick markieren (zweiter Klick löscht den Timer). Nochmal `Ctrl+Shift+O` oder das
-  Schloss-Symbol fixiert es wieder.
+- Verschieben per Drag & Drop, ohne Hotkey: Sobald die Maus auf der Kopfzeile oder einem Button steht, nimmt das
+  Overlay die Maus an (Rahmen wird golden) — Kopfzeile mit gedrückter Maustaste ziehen, Jungle-Camps per Klick
+  markieren (zweiter Klick löscht den Timer). Überall sonst bleiben die Klicks beim Spiel, und das Spiel behält
+  auch beim Ziehen die Tastatur (das Overlay-Fenster nimmt keinen Fokus).
 - `Ctrl+Shift+P` blendet das Overlay ein oder aus. Deckkraft, Größe, Ton und Inhalt stehen in den Einstellungen.
 - League muss im Modus "Randlos" oder "Fenster" laufen. Bei exklusivem Vollbild zeigt Poro einen Hinweis.
 - Position: automatisch neben dem Spielfenster, wenn der Monitor dort Platz hat (z. B. mit LoL 27, das das Spiel
@@ -84,7 +85,7 @@ Riot-Hinweis steht in den Einstellungen.
 - Phase 3 (In-Game) ist implementiert: `packages/live-client` pollt die Live Client Data API, Objective-Timer
   (Drache/Soul/Ältester, Leerenbruten, Herold, Baron, Inhibitoren), Live-Stats (KDA, CS/min, Kill-Beteiligung,
   CS und Wards @10/@20, Itemwert, Rang und Winrate aus der Lobby-Analyse), manuelle Jungle-Timer, transparentes
-  Overlay mit Hotkeys (Ctrl+Shift+O entsperren/verschieben, Ctrl+Shift+P ein/aus), optionalem Ton vor Spawns und
+  Overlay (Drag & Drop direkt an der Kopfzeile, Ctrl+Shift+P ein/aus), optionalem Ton vor Spawns und
   Hinweis bei exklusivem Vollbild. Bisher nur mit `--demo-live` geprüft.
 - Phase 4 (Post-Game) ist implementiert: Nach jedem Spiel (und per "Letztes Spiel analysieren") entsteht die
   Auswertung aus dem Client, mit Riot-API-Key ergänzt um Match-V5 und Timeline: Gold-, CS- und XP-Verlauf gegen

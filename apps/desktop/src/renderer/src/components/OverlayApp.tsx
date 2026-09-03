@@ -1,9 +1,10 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { liveGameTime, useLiveData, useNow } from '../hooks';
-import { IconLock } from './icons';
 import { LiveGamePanel } from './LiveGamePanel';
 
 const ALERT_SECONDS = [60, 30];
+/** Areas that take the mouse; everywhere else the window stays click-through for the game. */
+const HIT_SELECTOR = '.overlay-bar, button';
 
 let audio: AudioContext | null = null;
 function beep(times: number): void {
@@ -28,11 +29,14 @@ function beep(times: number): void {
 
 /** Root of the transparent overlay window. */
 export function OverlayApp() {
-  const { live, overlay, settings, staticData } = useLiveData();
+  const { live, settings, staticData } = useLiveData();
   const now = useNow();
   const de = settings.locale === 'de';
   const announced = useRef(new Set<string>());
   const rootRef = useRef<HTMLDivElement>(null);
+  const dragging = useRef(false);
+  const hovering = useRef(false);
+  const [hover, setHover] = useState(false);
 
   // Keep the window height in sync with the rendered content.
   useEffect(() => {
@@ -64,13 +68,40 @@ export function OverlayApp() {
     }
   }, [now, live, settings.overlaySound]);
 
+  // The window is click-through and only forwards mouse moves; as soon as the cursor is over the title bar
+  // or a button we let the main process take the mouse, so dragging and clicking work without a hotkey.
+  useEffect(() => {
+    const report = (on: boolean) => {
+      if (hovering.current === on) return;
+      hovering.current = on;
+      setHover(on);
+      window.poro.setOverlayHover(on);
+    };
+    const onMove = (e: MouseEvent) => {
+      if (dragging.current) return;
+      const el = document.elementFromPoint(e.clientX, e.clientY);
+      report(!!el?.closest(HIT_SELECTOR));
+    };
+    const onLeave = () => {
+      if (!dragging.current) report(false);
+    };
+    window.addEventListener('mousemove', onMove, true);
+    document.addEventListener('mouseleave', onLeave);
+    return () => {
+      window.removeEventListener('mousemove', onMove, true);
+      document.removeEventListener('mouseleave', onLeave);
+      report(false);
+    };
+  }, []);
+
   // Manual drag: transparent frameless windows do not reliably honour CSS drag regions on Windows.
   const onBarMouseDown = (e: React.MouseEvent) => {
-    if (!overlay.interactive || e.button !== 0 || (e.target as HTMLElement).closest('button')) return;
+    if (e.button !== 0 || (e.target as HTMLElement).closest('button')) return;
     e.preventDefault();
     const startX = e.screenX;
     const startY = e.screenY;
     let frame = 0;
+    dragging.current = true;
     void window.poro.overlayDragStart();
     const move = (ev: MouseEvent) => {
       if (frame) return;
@@ -82,6 +113,7 @@ export function OverlayApp() {
     const up = () => {
       window.removeEventListener('mousemove', move);
       window.removeEventListener('mouseup', up);
+      dragging.current = false;
       void window.poro.overlayDragEnd();
     };
     window.addEventListener('mousemove', move);
@@ -91,32 +123,11 @@ export function OverlayApp() {
   const style = { opacity: settings.overlayOpacity, zoom: settings.overlayScale } as React.CSSProperties;
 
   return (
-    <div
-      ref={rootRef}
-      className={`overlay-root ${overlay.interactive ? 'overlay-interactive' : ''}`}
-      style={style}
-    >
+    <div ref={rootRef} className={`overlay-root ${hover ? 'overlay-hover' : ''}`} style={style}>
       <div className="overlay-bar" onMouseDown={onBarMouseDown}>
         <span className="brand-mark brand-mark-sm">P</span>
         <span className="overlay-title">Poro</span>
-        <span className="muted small overlay-hint">
-          {overlay.interactive
-            ? de
-              ? 'Ziehen zum Verschieben'
-              : 'drag to move'
-            : `${overlay.hotkeys.interactive.replace('CommandOrControl', 'Ctrl')} ${de ? '= entsperren' : '= unlock'}`}
-        </span>
-        {overlay.interactive && (
-          <button
-            type="button"
-            className="btn btn-sm overlay-lock"
-            onClick={() => void window.poro.setOverlayInteractive(false)}
-            title={de ? 'Fixieren' : 'Lock'}
-            aria-label={de ? 'Fixieren' : 'Lock'}
-          >
-            <IconLock size={13} />
-          </button>
-        )}
+        <span className="muted small overlay-hint">{de ? 'Ziehen zum Verschieben' : 'drag to move'}</span>
       </div>
       {live.connected ? (
         <LiveGamePanel
@@ -126,7 +137,6 @@ export function OverlayApp() {
           compact
           showPlayers={settings.overlayShowPlayers}
           showJungle={settings.overlayShowJungle}
-          interactive={overlay.interactive}
         />
       ) : (
         <div className="overlay-idle muted">

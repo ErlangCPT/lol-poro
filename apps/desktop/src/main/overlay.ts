@@ -13,7 +13,6 @@ export interface OverlayDeps {
 }
 
 export const OVERLAY_HOTKEYS = {
-  interactive: 'CommandOrControl+Shift+O',
   toggle: 'CommandOrControl+Shift+P',
 };
 /** unscaled panel width in DIP; the window width follows overlayScale */
@@ -22,8 +21,12 @@ const DEFAULT_HEIGHT = 560;
 const MARGIN = 12;
 
 /**
- * Transparent always-on-top window that shows the in-game panel. Click-through by default;
- * the hotkey (or the lock button in interactive mode) toggles mouse interaction so it can be moved.
+ * Transparent always-on-top window that shows the in-game panel.
+ *
+ * Mouse handling: the window is click-through but forwards mouse moves to the renderer. As soon as the cursor
+ * sits on the title bar or a button the renderer reports it (setHover) and the window takes the mouse, so the
+ * overlay can be dragged and the timers clicked right away — without a lock/unlock hotkey. The window is not
+ * focusable, so the game keeps the keyboard while the overlay is being dragged.
  *
  * Placement: a manually dragged position is kept (settings.overlayBounds). Otherwise the overlay follows
  * the game window: beside it when the display has room (e.g. with LoL 27's shrunken game window),
@@ -31,10 +34,13 @@ const MARGIN = 12;
  */
 export class OverlayWindow {
   private win: BrowserWindow | null = null;
-  private interactive = false;
+  /** the cursor is over an interactive area, so the window swallows mouse input */
+  private hover = false;
+  private dragging = false;
   private wanted = false;
   private boundsTimer: NodeJS.Timeout | null = null;
   private topTimer: NodeJS.Timeout | null = null;
+  private hoverTimer: NodeJS.Timeout | null = null;
   private gameRect: GameWindowRect | null = null;
   private moving = false;
   private hotkeyError: string | undefined;
@@ -49,7 +55,6 @@ export class OverlayWindow {
     return {
       enabled: this.deps.getSettings().overlayEnabled,
       visible: !!this.win && !this.win.isDestroyed() && this.win.isVisible(),
-      interactive: this.interactive,
       hotkeys: this.hotkeys(),
       hotkeyError: this.hotkeyError,
     };
@@ -107,6 +112,8 @@ export class OverlayWindow {
       minimizable: false,
       maximizable: false,
       fullscreenable: false,
+      // clicking or dragging the overlay must not pull the focus away from the running game
+      focusable: false,
       hasShadow: false,
       show: false,
       title: 'Poro Overlay',
@@ -122,10 +129,13 @@ export class OverlayWindow {
     win.setAlwaysOnTop(true, 'screen-saver');
     win.setIgnoreMouseEvents(true, { forward: true });
     win.on('moved', () => {
-      if (this.interactive && !this.moving) this.persistBounds();
+      if (!this.moving) this.persistBounds();
     });
     win.on('closed', () => {
       this.win = null;
+      this.hover = false;
+      this.dragging = false;
+      this.stopHoverWatchdog();
       this.publish();
     });
     this.deps.onWindow(win);
@@ -163,17 +173,57 @@ export class OverlayWindow {
   follow(rect: GameWindowRect | null): void {
     const changed = JSON.stringify(rect) !== JSON.stringify(this.gameRect);
     this.gameRect = rect;
-    if (changed && this.win && !this.win.isDestroyed() && !this.interactive) {
+    if (changed && this.win && !this.win.isDestroyed() && !this.dragging && !this.hover) {
       this.setBoundsQuiet(this.targetBounds());
     }
+  }
+
+  /**
+   * Reported by the overlay renderer whenever the cursor enters or leaves an interactive area.
+   * Only then does the window swallow mouse input; everywhere else the clicks belong to the game.
+   */
+  setHover(hover: boolean): void {
+    if (this.hover === hover) return;
+    this.hover = hover;
+    if (!this.win || this.win.isDestroyed()) return;
+    if (hover) {
+      // no focus() call: the window is not focusable, the game keeps the keyboard
+      this.win.setIgnoreMouseEvents(false);
+      this.startHoverWatchdog();
+    } else {
+      this.win.setIgnoreMouseEvents(true, { forward: true });
+      this.stopHoverWatchdog();
+    }
+  }
+
+  /**
+   * Safety net for the hover state: a forwarded mouse move can be missed (the cursor leaves quickly, the
+   * window moves out from under it, the renderer reloads). Without it the overlay would stay solid and
+   * swallow clicks meant for the game.
+   */
+  private startHoverWatchdog(): void {
+    if (this.hoverTimer) return;
+    this.hoverTimer = setInterval(() => {
+      if (this.dragging || !this.win || this.win.isDestroyed()) return;
+      const p = screen.getCursorScreenPoint();
+      const b = this.win.getBounds();
+      const inside = p.x >= b.x && p.x < b.x + b.width && p.y >= b.y && p.y < b.y + b.height;
+      if (!inside) this.setHover(false);
+    }, 300);
+  }
+
+  private stopHoverWatchdog(): void {
+    if (this.hoverTimer) clearInterval(this.hoverTimer);
+    this.hoverTimer = null;
   }
 
   private dragOrigin: { x: number; y: number } | null = null;
 
   beginDrag(): void {
-    if (!this.win || this.win.isDestroyed() || !this.interactive) return;
+    if (!this.win || this.win.isDestroyed()) return;
     const b = this.win.getBounds();
     this.dragOrigin = { x: b.x, y: b.y };
+    this.dragging = true;
   }
 
   dragTo(dx: number, dy: number): void {
@@ -188,6 +238,7 @@ export class OverlayWindow {
   }
 
   endDrag(): void {
+    this.dragging = false;
     if (!this.dragOrigin) return;
     this.dragOrigin = null;
     this.moving = false;
@@ -217,14 +268,14 @@ export class OverlayWindow {
     const show = this.wanted && this.deps.getSettings().overlayEnabled;
     if (show) {
       const win = this.ensure();
-      if (!this.interactive) this.setBoundsQuiet(this.targetBounds());
+      if (!this.dragging && !this.hover) this.setBoundsQuiet(this.targetBounds());
       if (!win.isVisible()) win.showInactive();
       this.startTopTimer();
     } else {
       this.stopTopTimer();
       if (this.win && !this.win.isDestroyed() && this.win.isVisible()) {
+        this.setHover(false);
         this.win.hide();
-        if (this.interactive) this.setInteractive(false);
       }
     }
     this.publish();
@@ -235,7 +286,7 @@ export class OverlayWindow {
   private startTopTimer(): void {
     if (this.topTimer) return;
     this.topTimer = setInterval(() => {
-      if (!this.win || this.win.isDestroyed() || !this.win.isVisible() || this.interactive) return;
+      if (!this.win || this.win.isDestroyed() || !this.win.isVisible() || this.dragging) return;
       if (this.gameRect && !this.gameRect.foreground) return;
       this.win.setAlwaysOnTop(true, 'screen-saver');
     }, 1000);
@@ -246,54 +297,27 @@ export class OverlayWindow {
     this.topTimer = null;
   }
 
-  setInteractive(interactive: boolean): void {
-    this.interactive = interactive;
-    if (this.win && !this.win.isDestroyed()) {
-      if (interactive) {
-        this.win.setIgnoreMouseEvents(false);
-        this.win.focus();
-      } else {
-        this.win.setIgnoreMouseEvents(true, { forward: true });
-        this.win.blur();
-      }
-    }
-    this.publish();
-  }
-
-  toggleInteractive(): void {
-    if (!this.win || !this.win.isVisible()) return;
-    this.setInteractive(!this.interactive);
-  }
-
   toggleEnabled(): void {
     this.deps.updateSettings({ overlayEnabled: !this.deps.getSettings().overlayEnabled });
     this.apply();
   }
 
-  /** Hotkeys from the settings, falling back to the defaults for empty values. */
-  private hotkeys(): { interactive: string; toggle: string } {
+  /** Hotkey from the settings, falling back to the default for an empty value. */
+  private hotkeys(): { toggle: string } {
     const s = this.deps.getSettings();
-    return {
-      interactive: s.hotkeyInteractive?.trim() || OVERLAY_HOTKEYS.interactive,
-      toggle: s.hotkeyToggle?.trim() || OVERLAY_HOTKEYS.toggle,
-    };
+    return { toggle: s.hotkeyToggle?.trim() || OVERLAY_HOTKEYS.toggle };
   }
 
-  /** (Re)registers the global shortcuts; a failed registration (invalid or taken) is reported in the status. */
+  /** (Re)registers the global shortcut; a failed registration (invalid or taken) is reported in the status. */
   registerHotkeys(): void {
     globalShortcut.unregisterAll();
     const keys = this.hotkeys();
     const failed: string[] = [];
-    const register = (accelerator: string, fn: () => void) => {
-      try {
-        if (!globalShortcut.register(accelerator, fn)) failed.push(accelerator);
-      } catch {
-        failed.push(accelerator);
-      }
-    };
-    register(keys.interactive, () => this.toggleInteractive());
-    if (keys.toggle !== keys.interactive) register(keys.toggle, () => this.toggleEnabled());
-    else failed.push(keys.toggle);
+    try {
+      if (!globalShortcut.register(keys.toggle, () => this.toggleEnabled())) failed.push(keys.toggle);
+    } catch {
+      failed.push(keys.toggle);
+    }
     this.hotkeyError = failed.length ? failed.join(', ') : undefined;
     if (failed.length) this.deps.log.warn('overlay hotkeys could not be registered', failed);
     this.publish();
@@ -301,6 +325,7 @@ export class OverlayWindow {
 
   destroy(): void {
     this.stopTopTimer();
+    this.stopHoverWatchdog();
     globalShortcut.unregisterAll();
     if (this.win && !this.win.isDestroyed()) this.win.destroy();
     this.win = null;

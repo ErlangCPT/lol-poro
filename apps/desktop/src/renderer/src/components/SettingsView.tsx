@@ -290,26 +290,11 @@ export function SettingsView({
           title={de ? 'In-Game-Overlay' : 'In-game overlay'}
           intro={
             de
-              ? `Das Overlay erscheint automatisch, sobald ein Spiel läuft. Es ist durchklickbar; ${hotkey(overlay.hotkeys.interactive)} entsperrt es zum Verschieben und für die Jungle-Timer, ${hotkey(overlay.hotkeys.toggle)} blendet es ein oder aus. Position: automatisch neben dem Spielfenster, wenn dort Platz ist (z. B. mit LoL 27), sonst am linken Rand im Spiel; einmal verschoben bleibt es an dieser Stelle. League muss im Modus "Randlos" oder "Fenster" laufen.`
-              : `The overlay appears automatically while a game runs. It is click-through; ${hotkey(overlay.hotkeys.interactive)} unlocks it for moving and for the jungle timers, ${hotkey(overlay.hotkeys.toggle)} shows or hides it. Position: automatically beside the game window when there is room (e.g. with LoL 27), otherwise at the left edge inside the game; once dragged it stays there. League must run in "Borderless" or "Windowed" mode.`
+              ? `Das Overlay erscheint automatisch, sobald ein Spiel läuft. Es ist durchklickbar; sobald die Maus auf der Kopfzeile oder einem Button steht, nimmt es die Maus an: einfach an der Kopfzeile ziehen zum Verschieben, Jungle-Camps per Klick markieren. Das Spiel behält dabei die Tastatur. ${hotkey(overlay.hotkeys.toggle)} blendet das Overlay ein oder aus. Position: automatisch neben dem Spielfenster, wenn dort Platz ist (z. B. mit LoL 27), sonst am linken Rand im Spiel; einmal verschoben bleibt es an dieser Stelle. League muss im Modus "Randlos" oder "Fenster" laufen.`
+              : `The overlay appears automatically while a game runs. It is click-through; as soon as the mouse is over the title bar or a button it takes the mouse: drag the title bar to move it, click the jungle camps to mark them. The game keeps the keyboard. ${hotkey(overlay.hotkeys.toggle)} shows or hides the overlay. Position: automatically beside the game window when there is room (e.g. with LoL 27), otherwise at the left edge inside the game; once dragged it stays there. League must run in "Borderless" or "Windowed" mode.`
           }
         >
           <Row label={de ? 'Overlay anzeigen' : 'Show overlay'}>{toggle('overlayEnabled')}</Row>
-          <Row
-            label={de ? 'Hotkey: entsperren / fixieren' : 'Hotkey: unlock / lock'}
-            hint={
-              de
-                ? 'Klicken und Kombination drücken. Rücktaste setzt den Standard zurück.'
-                : 'Click and press the combination. Backspace restores the default.'
-            }
-          >
-            <HotkeyInput
-              value={settings.hotkeyInteractive}
-              fallback={DEFAULT_HOTKEYS.interactive}
-              de={de}
-              onChange={(acc) => void update({ hotkeyInteractive: acc })}
-            />
-          </Row>
           <Row
             label={de ? 'Hotkey: ein- / ausblenden' : 'Hotkey: show / hide'}
             hint={
@@ -320,7 +305,11 @@ export function SettingsView({
                     : 'Could not register (taken or invalid): '}
                   {hotkey(overlay.hotkeyError)}
                 </span>
-              ) : undefined
+              ) : de ? (
+                'Klicken und Kombination drücken. Rücktaste setzt den Standard zurück.'
+              ) : (
+                'Click and press the combination. Backspace restores the default.'
+              )
             }
           >
             <HotkeyInput

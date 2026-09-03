@@ -22,8 +22,6 @@ interface Props {
   compact?: boolean;
   showPlayers?: boolean;
   showJungle?: boolean;
-  /** jungle buttons only react when the panel is interactive */
-  interactive?: boolean;
 }
 
 const TIER_CODE: Record<string, string> = {
@@ -187,7 +185,6 @@ export function LiveGamePanel({
   compact = false,
   showPlayers = true,
   showJungle = true,
-  interactive = true,
 }: Props) {
   const de = locale === 'de';
   const now = useNow();
@@ -218,7 +215,6 @@ export function LiveGamePanel({
               type="button"
               className={`camp ${timer ? 'camp-active' : ''} ${timer && left < 30 ? 'camp-soon' : ''}`}
               style={timer ? ({ '--p': `${Math.round(progress * 100)}%` } as CSSProperties) : undefined}
-              disabled={!interactive}
               title={t(camp.label, locale)}
               onClick={() => void window.poro.markJungle(side, camp.id)}
             >
@@ -294,15 +290,7 @@ export function LiveGamePanel({
         <div className="live-jungle">
           <div className="live-team-head">
             <span>{de ? 'Jungle-Timer' : 'Jungle timers'}</span>
-            <span className="muted small">
-              {interactive
-                ? de
-                  ? 'Klick = Camp gecleart'
-                  : 'click = camp cleared'
-                : de
-                  ? 'Overlay entsperren zum Setzen'
-                  : 'unlock overlay to set'}
-            </span>
+            <span className="muted small">{de ? 'Klick = Camp gecleart' : 'click = camp cleared'}</span>
           </div>
           {jungleSide(first)}
           {jungleSide(second)}

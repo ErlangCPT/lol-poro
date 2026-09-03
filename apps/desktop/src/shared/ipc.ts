@@ -59,8 +59,7 @@ export interface AppSettings {
   crawlerRequestsPerMinute: number;
   /** appearance (Phase 6) */
   theme: 'dark' | 'light' | 'system';
-  /** global shortcuts of the overlay as Electron accelerators, e.g. "CommandOrControl+Shift+O" */
-  hotkeyInteractive: string;
+  /** global shortcut of the overlay as an Electron accelerator, e.g. "CommandOrControl+Shift+P" */
   hotkeyToggle: string;
   /** generic update feed: folder with latest.yml, installer and blockmap; empty = no update checks */
   updateUrl: string;
@@ -68,7 +67,6 @@ export interface AppSettings {
 }
 
 export const DEFAULT_HOTKEYS = {
-  interactive: 'CommandOrControl+Shift+O',
   toggle: 'CommandOrControl+Shift+P',
 };
 
@@ -90,7 +88,6 @@ export const DEFAULT_SETTINGS: AppSettings = {
   crawlerEnabled: true,
   crawlerRequestsPerMinute: 40,
   theme: 'dark',
-  hotkeyInteractive: DEFAULT_HOTKEYS.interactive,
   hotkeyToggle: DEFAULT_HOTKEYS.toggle,
   updateUrl: '',
   updateCheckOnStart: true,
@@ -242,8 +239,7 @@ export interface LiveGameSnapshot {
 export interface OverlayStatus {
   enabled: boolean;
   visible: boolean;
-  interactive: boolean;
-  hotkeys: { interactive: string; toggle: string };
+  hotkeys: { toggle: string };
   /** accelerators that could not be registered (invalid or taken by another program) */
   hotkeyError?: string;
 }
@@ -343,7 +339,7 @@ export const IPC = {
   jungleClear: 'jungle:clear',
   overlayGet: 'overlay:get',
   overlayChanged: 'overlay:changed',
-  overlaySetInteractive: 'overlay:setInteractive',
+  overlayHover: 'overlay:hover',
   overlayToggle: 'overlay:toggle',
   overlayResize: 'overlay:resize',
   overlayDragStart: 'overlay:dragStart',
@@ -399,11 +395,12 @@ export interface PoroApi {
   clearJungle(): Promise<void>;
   getOverlay(): Promise<OverlayStatus>;
   onOverlay(cb: (status: OverlayStatus) => void): () => void;
-  setOverlayInteractive(interactive: boolean): Promise<void>;
+  /** the cursor is over an interactive area of the overlay, which then takes the mouse (else click-through) */
+  setOverlayHover(hover: boolean): void;
   toggleOverlay(): Promise<void>;
   /** the overlay window follows its content height */
   setOverlaySize(height: number): Promise<void>;
-  /** manual drag of the unlocked overlay (transparent windows cannot rely on CSS drag regions) */
+  /** manual drag of the overlay (transparent windows cannot rely on CSS drag regions) */
   overlayDragStart(): Promise<void>;
   overlayDrag(dx: number, dy: number): void;
   overlayDragEnd(): Promise<void>;

@@ -98,8 +98,7 @@ export const INITIAL_META: MetaSnapshot = {
 export const INITIAL_OVERLAY: OverlayStatus = {
   enabled: true,
   visible: false,
-  interactive: false,
-  hotkeys: { interactive: 'Ctrl+Shift+O', toggle: 'Ctrl+Shift+P' },
+  hotkeys: { toggle: 'Ctrl+Shift+P' },
 };
 
 /** Live game data, overlay status and settings; shared by the main window and the overlay window. */

@@ -13,7 +13,8 @@ Abweichungen: JSON-Datei-Cache für Spielerdaten bleibt, SQLite (`node:sqlite`, 
 Post-Game-Historie; `packages/riot-api` wurde vorgezogen, weil der Client die
 eigene Match-History nur unvollständig liefert; Ban-/Counter-Vorschläge kommen aus dem lokalen Crawler in der Desktop-App statt aus einem Server-Crawler (kein
 `apps/web`, keine Vercel-Cron); Jungle-Camp-Hotkeys
-wurden bewusst weggelassen (Konflikt mit Spiel-Tasten), Camps werden im entsperrten Overlay per Klick markiert.
+wurden bewusst weggelassen (Konflikt mit Spiel-Tasten), Camps werden im Overlay per Klick markiert (das Overlay
+nimmt die Maus an, sobald der Cursor auf Kopfzeile oder Button steht — kein Entsperr-Hotkey).
 
 ## 0. Ziel und Leitentscheidungen
 

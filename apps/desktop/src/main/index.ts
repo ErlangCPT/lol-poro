@@ -408,8 +408,7 @@ function applySettings(patch: Partial<AppSettings>): AppSettings {
     void lobby.refresh();
   else lobby.recompute();
   overlay.apply();
-  if (before.hotkeyInteractive !== after.hotkeyInteractive || before.hotkeyToggle !== after.hotkeyToggle)
-    overlay.registerHotkeys();
+  if (before.hotkeyToggle !== after.hotkeyToggle) overlay.registerHotkeys();
   stats.apply();
   return after;
 }
@@ -517,9 +516,7 @@ function registerIpc(): void {
   ipcMain.handle(IPC.jungleMark, (_e, side: LiveTeam, campId: string) => inGame.markJungle(side, campId));
   ipcMain.handle(IPC.jungleClear, () => inGame.clearJungle());
   ipcMain.handle(IPC.overlayGet, () => overlay.status());
-  ipcMain.handle(IPC.overlaySetInteractive, (_e, interactive: boolean) =>
-    overlay.setInteractive(interactive),
-  );
+  ipcMain.on(IPC.overlayHover, (_e, hover: boolean) => overlay.setHover(hover));
   ipcMain.handle(IPC.overlayToggle, () => overlay.toggleEnabled());
   ipcMain.handle(IPC.overlayResize, (_e, height: number) => overlay.resizeTo(height));
   ipcMain.handle(IPC.overlayDragStart, () => overlay.beginDrag());
